@@ -1,63 +1,60 @@
 -- =====================================================
--- Module 2 Exercises: Claims Analysis
+-- Module 2 Exercises: Introduction to BriteCore Views
 -- =====================================================
 
--- Exercise 2.1: Basic Claims Data Retrieval
+-- Exercise 2.1: Basic Contact Data Retrieval
 -- ==========================================
--- Write a query to retrieve the first 10 claims
--- Include: claim_number, claim_status, claim_type, loss_date, and description
--- Only show active claims
+-- Write a query to retrieve the first 10 contacts with their basic information
+-- Include: contact_id, contact_name, contact_type, and primary_email
+-- Only show active contacts (not deleted)
 
 -- Your query here:
 -- SELECT ...
 
--- Exercise 2.2: Claims Status Analysis
--- ====================================
--- Find all claim statuses and count how many claims are in each status
--- Show the status name and count
--- Order by count descending
+-- Exercise 2.2: Contact Filtering
+-- ===============================
+-- Find all contacts who are organizations (not individuals)
+-- Show their name, email, and full address
+-- Limit to 5 results
 
 -- Your query here:
 -- SELECT ...
 
--- Exercise 2.3: Claims by Loss Cause
--- ===================================
--- Find all loss causes and count claims for each cause
--- Only include causes that have claims (not NULL)
--- Show the loss cause and claim count
--- Order by count descending
+-- Exercise 2.3: Contact Search
+-- ============================
+-- Search for contacts whose name contains "Smith"
+-- Show their name, type, and primary phone
+-- Order by contact name alphabetically
 
 -- Your query here:
 -- SELECT ...
 
--- Exercise 2.4: Claims by Month
--- =============================
--- Find how many claims occurred each month in the current year
--- Show the month (YYYY-MM format) and claim count
--- Order by month descending
+-- Exercise 2.4: Geographic Analysis
+-- =================================
+-- Find all contacts in California (CA)
+-- Count how many are individuals vs organizations
+-- Show the count for each type
 
 -- Your query here:
 -- SELECT ...
 
--- Exercise 2.5: Claims vs Policy Types
--- ====================================
--- Join v_claims with v_policy_types to see claims by policy type
--- Show policy type and claim count
--- Only include active claims
--- Order by claim count descending
+-- Exercise 2.5: Role Analysis
+-- ===========================
+-- Find all contacts who have the role "agent"
+-- Show their name, email, and roles
+-- Only include active contacts
 
 -- Your query here:
 -- SELECT ...
 
 -- =====================================================
--- Challenge Exercise: Claims Dashboard
+-- Challenge Exercise: Contact Summary Report
 -- =====================================================
--- Create a comprehensive claims dashboard showing:
--- 1. Total active claims
--- 2. Open claims count
--- 3. Claims this year
--- 4. Claims this month
--- 5. Most common loss cause
+-- Create a summary report showing:
+-- 1. Total number of active contacts
+-- 2. Breakdown by contact type (individual vs organization)
+-- 3. Top 5 states by number of contacts
+-- 4. Number of contacts with email addresses
 
 -- Your comprehensive query here:
 -- SELECT ...
@@ -67,62 +64,37 @@
 -- =====================================================
 
 -- Solution 2.1:
-SELECT claim_number, claim_status, claim_type, loss_date, description
-FROM v_claims
-WHERE claim_active_flag = 1
+SELECT contact_id, contact_name, contact_type, primary_email
+FROM v_contacts
+WHERE deleted = 0
 LIMIT 10;
 
 -- Solution 2.2:
-SELECT claim_status, COUNT(*) as claim_count
-FROM v_claims
-WHERE claim_active_flag = 1
-GROUP BY claim_status
-ORDER BY claim_count DESC;
+SELECT contact_name, primary_email, full_address
+FROM v_contacts
+WHERE contact_type = 'organization' AND deleted = 0
+LIMIT 5;
 
--- Solution 2.3
-SELECT loss_cause, COUNT(*) as claim_count
-FROM v_claims
-WHERE claim_active_flag = 1 AND loss_cause IS NOT NULL
-GROUP BY loss_cause
-ORDER BY claim_count DESC;
+-- Solution 2.3:
+SELECT contact_name, contact_type, primary_phone
+FROM v_contacts
+WHERE contact_name LIKE '%Smith%' AND deleted = 0
+ORDER BY contact_name;
 
 -- Solution 2.4:
-SELECT 
-    DATE_FORMAT(loss_date, '%Y-%m') as loss_month,
-    COUNT(*) as claim_count
-FROM v_claims
-WHERE claim_active_flag = 1  AND loss_date IS NOT NULL
-  AND YEAR(loss_date) = YEAR(CURDATE())
-GROUP BY DATE_FORMAT(loss_date, '%Y-%m')
-ORDER BY loss_month DESC;
+SELECT contact_type, COUNT(*) as contact_count
+FROM v_contacts
+WHERE address_state = 'CA' AND deleted = 0
+GROUP BY contact_type;
 
 -- Solution 2.5:
-SELECT 
-    pt.policy_type,
-    COUNT(c.claim_id) as claim_count
-FROM v_claims c
-JOIN v_policy_types pt ON c.policy_type_id = pt.policy_type_id
-WHERE c.claim_active_flag = 1
-GROUP BY pt.policy_type
-ORDER BY claim_count DESC;
+SELECT contact_name, primary_email, roles
+FROM v_contacts
+WHERE roles LIKE '%agent%' AND deleted = 0;
 
 -- Solution Challenge:
 SELECT
-  (SELECT COUNT(*) FROM v_claims WHERE claim_active_flag = 1) AS total_active_claims,
-  (SELECT COUNT(*) FROM v_claims WHERE claim_active_flag = 1 AND claim_status = 'open') AS open_claims,
-  (SELECT COUNT(*) FROM v_claims WHERE claim_active_flag = 1 AND YEAR(loss_date) = YEAR(CURDATE())) AS claims_this_year,
-  (SELECT COUNT(*) FROM v_claims WHERE claim_active_flag = 1 AND DATE_FORMAT(loss_date, '%Y-%m') = DATE_FORMAT(CURDATE(), '%Y-%m')) AS claims_this_month,
-  (SELECT loss_cause FROM v_claims
-    WHERE claim_active_flag = 1 AND loss_cause IS NOT NULL
-    GROUP BY loss_cause
-    ORDER BY COUNT(*) DESC
-    LIMIT 1) AS most_common_loss_cause,
-  (SELECT COUNT(*) FROM v_claims
-    WHERE claim_active_flag = 1
-      AND loss_cause = (
-          SELECT loss_cause FROM v_claims
-          WHERE claim_active_flag = 1 AND loss_cause IS NOT NULL
-          GROUP BY loss_cause
-          ORDER BY COUNT(*) DESC
-          LIMIT 1
-      )) AS most_common_loss_cause_count;
+    (SELECT COUNT(*) FROM v_contacts WHERE deleted = 0) AS total_active_contacts,
+    (SELECT COUNT(*) FROM v_contacts WHERE contact_type = 'individual' AND deleted = 0) AS individuals,
+    (SELECT COUNT(*) FROM v_contacts WHERE contact_type = 'organization' AND deleted = 0) AS organizations,
+    (SELECT COUNT(*) FROM v_contacts WHERE primary_email IS NOT NULL AND deleted = 0) AS with_email_addresses;

@@ -54,35 +54,34 @@ Prod-LoLa/
 
 ## 🎓 Course Modules
 
-### Module 1: Introduction to BriteCore Views (Week 1)
-- **Lesson 1.1**: Understanding the Logical Layer
-- **Lesson 1.2**: Setting Up Your SQL Editor for BriteCore
-- **Lesson 1.3**: Your First Query with v_contacts
-- **Exercise 1**: Basic Contact Data Retrieval
+### Module 1: Materialized Views - m_inforce_policies (Module 1)
+- **Lesson 1.1**: Introduction to Materialized Views - m_inforce_policies
+- **Exercise 1**: Basic m_inforce_policies Queries
 
-### Module 2: Claims Analysis (Week 2)
-- **Lesson 2.1**: Understanding v_claims Structure
-- **Lesson 2.2**: Claims Filtering and Status Analysis
-- **Lesson 2.3**: Claims vs Policies Relationships
-- **Exercise 2**: Claims Reporting Queries
+### Module 2: Introduction to BriteCore Views (Module 2)
+- **Lesson 2.1**: Understanding the Logical Layer
+- **Lesson 2.2**: Setting Up Your SQL Editor for BriteCore
+- **Exercise 2**: Basic Contact Data Retrieval
 
-### Module 3: Policy and Property Data (Week 3)
-- **Lesson 3.1**: Policy Types and Forms (v_policy_types)
-- **Lesson 3.2**: Property Information (v_properties)
-- **Lesson 3.3**: Policy Revisions and Changes
-- **Exercise 3**: Policy Analysis Projects
+### Module 3: Claims Analysis (Module 3)
+- **Lesson 3.1**: Understanding v_claims Structure
+- **Lesson 3.2**: Claims Filtering and Status Analysis
+- **Exercise 3**: Claims Reporting Queries
 
-### Module 4: Financial Data Analysis (Week 4)
-- **Lesson 4.1**: Payment Processing (v_payments)
-- **Lesson 4.2**: Commission Tracking (v_commission_details)
-- **Lesson 4.3**: Financial Aggregations
-- **Exercise 4**: Financial Reporting
+### Module 4: Policy and Property Data (Module 4)
+- **Lesson 4.1**: Policy Types and Forms (v_policy_types)
+- **Lesson 4.2**: Property Information (v_properties)
+- **Exercise 4**: Policy Analysis Projects
 
-### Module 5: Advanced Analytics (Week 5)
-- **Lesson 5.1**: Multi-view JOINs
-- **Lesson 5.2**: Window Functions for Trends
-- **Lesson 5.3**: Business Intelligence Dashboards
-- **Final Project**: Comprehensive Business Report
+### Module 5: Financial Data Analysis (Module 5)
+- **Lesson 5.1**: Payment Processing (v_payments)
+- **Lesson 5.2**: Commission Tracking (v_commission_details)
+- **Exercise 5**: Financial Reporting
+
+### Module 6: Advanced Analytics (Module 6)
+- **Lesson 6.1**: Multi-view JOINs
+- **Lesson 6.2**: Window Functions for Trends
+- **Exercise 6**: Advanced Business Intelligence
 
 ## 🛠️ Recommended SQL Editors
 

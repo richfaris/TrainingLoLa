@@ -1,6 +1,14 @@
 -- =====================================================
 -- Module 5 Exercises: Advanced Analytics
 -- =====================================================
+-- 
+-- 🚧 UNDER CONSTRUCTION 🚧
+-- 
+-- This module is currently being developed and tested. The exercises below may not work correctly 
+-- with the current BriteCore view structure. We will complete this module once we have verified 
+-- all field mappings and relationships.
+-- 
+-- =====================================================
 
 -- Exercise 5.1: Multi-View JOIN
 -- ==========================================
@@ -79,7 +87,8 @@ SELECT
     con.contact_name as insured_name
 FROM v_claims c
 JOIN v_policy_types pt ON c.policy_type_id = pt.policy_type_id
-JOIN v_contacts con ON c.primary_insured_id = con.contact_id
+JOIN v_claims_contacts cc ON c.claim_id = cc.claim_id AND cc.relationship = 'named_insured'
+JOIN v_contacts con ON cc.contact_id = con.contact_id
 WHERE c.claim_active_flag = 1
 ORDER BY c.loss_date DESC
 LIMIT 10;
@@ -91,7 +100,8 @@ SELECT
     SUM(p.transaction_amount) as total_revenue,
     COUNT(c.claim_id) as claim_count
 FROM v_contacts agent
-LEFT JOIN v_revisions r ON agent.contact_id = r.agent_id
+LEFT JOIN v_revisions_contacts rc ON agent.contact_id = rc.contact_id AND rc.relationship = 'agency'
+LEFT JOIN v_revisions r ON rc.revision_id = r.revision_id
 LEFT JOIN v_payments p ON r.policy_number = p.invoice_number
 LEFT JOIN v_claims c ON r.revision_id = c.revision_id
 WHERE agent.roles LIKE '%agent%' 
@@ -119,13 +129,13 @@ SELECT
     pt.policy_type,
     COUNT(DISTINCT r.revision_id) as policy_count,
     COUNT(DISTINCT c.claim_id) as claim_count,
-    SUM(p.transaction_amount) as total_revenue,
+    SUM(CASE WHEN p.completed = 1 THEN p.transaction_amount ELSE 0 END) as total_revenue,
     ROUND(COUNT(DISTINCT c.claim_id) / COUNT(DISTINCT r.revision_id) * 100, 2) as claim_frequency
 FROM v_policy_types pt
 LEFT JOIN v_revisions r ON pt.policy_type_id = r.policy_type_id
 LEFT JOIN v_claims c ON r.revision_id = c.revision_id
 LEFT JOIN v_payments p ON r.policy_number = p.invoice_number
-WHERE p.completed = 1
+WHERE pt.active = 1
 GROUP BY pt.policy_type
 ORDER BY total_revenue DESC;
 
@@ -163,7 +173,8 @@ SELECT
     SUM(p.transaction_amount) as total_revenue,
     ROUND(SUM(cd.commission_amount), 2) as total_commission
 FROM v_contacts agent
-LEFT JOIN v_revisions r ON agent.contact_id = r.agent_id
+LEFT JOIN v_revisions_contacts rc ON agent.contact_id = rc.contact_id AND rc.relationship = 'agency'
+LEFT JOIN v_revisions r ON rc.revision_id = r.revision_id
 LEFT JOIN v_payments p ON r.policy_number = p.invoice_number
 LEFT JOIN v_commission_details cd ON agent.contact_id = cd.agency_id
 WHERE agent.roles LIKE '%agent%' 

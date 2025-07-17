@@ -1,5 +1,9 @@
 # Lesson 5.1: Advanced Multi-View JOINs
 
+> **🚧 UNDER CONSTRUCTION 🚧**
+> 
+> This lesson is currently being developed and tested. The queries below may not work correctly with the current BriteCore view structure. We will complete this lesson once we have verified all field mappings and relationships.
+
 ## 🎯 Learning Objectives
 - Master complex JOIN operations with multiple BriteCore views
 - Understand view relationships and foreign keys
@@ -33,13 +37,14 @@ SELECT
     con.contact_name as insured_name
 FROM v_claims c
 JOIN v_policy_types pt ON c.policy_type_id = pt.policy_type_id
-JOIN v_contacts con ON c.primary_insured_id = con.contact_id
+JOIN v_claims_contacts cc ON c.claim_id = cc.claim_id AND cc.relationship = 'named_insured'
+JOIN v_contacts con ON cc.contact_id = con.contact_id
 WHERE c.claim_active_flag = 1
 ORDER BY c.loss_date DESC
 LIMIT 10;
 ```
 
-### 2. Payments with Policy and Contact Details
+### 2. Payments with Policy and Contact Details (broken)
 ```sql
 SELECT 
     p.transaction_amount,
@@ -48,8 +53,10 @@ SELECT
     pt.policy_type,
     con.contact_name as policyholder
 FROM v_payments p
-JOIN v_policy_types pt ON p.policy_type_id = pt.policy_type_id
-JOIN v_contacts con ON p.primary_insured_id = con.contact_id
+JOIN v_revisions r ON p.invoice_number = r.policy_number
+JOIN v_policy_types pt ON r.policy_type_id = pt.policy_type_id
+JOIN v_revisions_contacts rc ON r.revision_id = rc.revision_id AND rc.relationship = 'named_insured'
+JOIN v_contacts con ON rc.contact_id = con.contact_id
 WHERE p.completed = 1
 ORDER BY p.transaction_date_time DESC
 LIMIT 10;
@@ -57,7 +64,7 @@ LIMIT 10;
 
 ## 🏢 Complex Business Analysis
 
-### Claims Analysis by Agent and Policy Type
+### Claims Analysis by Agent and Policy Type (broken)
 ```sql
 SELECT 
     agent.contact_name as agent_name,
@@ -66,7 +73,9 @@ SELECT
     AVG(DATEDIFF(c.date_reported, c.loss_date)) as avg_reporting_delay
 FROM v_claims c
 JOIN v_policy_types pt ON c.policy_type_id = pt.policy_type_id
-JOIN v_contacts agent ON c.agent_id = agent.contact_id
+JOIN v_revisions r ON c.revision_id = r.revision_id
+JOIN v_revisions_contacts rc ON r.revision_id = rc.revision_id AND rc.relationship = 'agency'
+JOIN v_contacts agent ON rc.contact_id = agent.contact_id
 WHERE c.claim_active_flag = 1
   AND agent.roles LIKE '%agent%'
 GROUP BY agent.contact_name, pt.policy_type
@@ -82,7 +91,9 @@ SELECT
     AVG(p.transaction_amount) as avg_payment,
     COUNT(c.claim_id) as claim_count
 FROM v_payments p
-JOIN v_contacts agent ON p.agent_id = agent.contact_id
+JOIN v_revisions r ON p.invoice_number = r.policy_number
+JOIN v_revisions_contacts rc ON r.revision_id = rc.revision_id AND rc.relationship = 'agency'
+JOIN v_contacts agent ON rc.contact_id = agent.contact_id
 LEFT JOIN v_claims c ON p.invoice_number = c.policy_number
 WHERE p.completed = 1
   AND agent.roles LIKE '%agent%'
@@ -163,7 +174,8 @@ SELECT
     COUNT(c.claim_id) as claims_handled,
     ROUND(SUM(cd.commission_amount), 2) as total_commission
 FROM v_contacts agent
-LEFT JOIN v_revisions r ON agent.contact_id = r.agent_id
+LEFT JOIN v_revisions_contacts rc ON agent.contact_id = rc.contact_id AND rc.relationship = 'agency'
+LEFT JOIN v_revisions r ON rc.revision_id = r.revision_id
 LEFT JOIN v_payments p ON r.policy_number = p.invoice_number
 LEFT JOIN v_claims c ON r.revision_id = c.revision_id
 LEFT JOIN v_commission_details cd ON agent.contact_id = cd.agency_id
@@ -197,7 +209,8 @@ WHERE c.claim_active_flag = 1 AND pt.active = 1
 ```sql
 FROM v_claims c
 JOIN v_policy_types pt ON c.policy_type_id = pt.policy_type_id
-JOIN v_contacts con ON c.primary_insured_id = con.contact_id
+JOIN v_claims_contacts cc ON c.claim_id = cc.claim_id AND cc.relationship = 'named_insured'
+JOIN v_contacts con ON cc.contact_id = con.contact_id
 ```
 This makes queries more readable and maintainable.
 

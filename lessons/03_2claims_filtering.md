@@ -1,4 +1,4 @@
-# Lesson 2.2nced Claims Filtering and Status Analysis
+# Lesson 2.2 Claims Filtering and Status Analysis
 
 ## 🎯 Learning Objectives
 - Master complex WHERE clauses for claims filtering

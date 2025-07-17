@@ -20,7 +20,7 @@ Some m_ views are materialized, which increases system performance.
 
 ### Learning Path
 ```
-Week 1: Foundations → Week 2: Claims Analysis → Week 3: Policy Data → Week 4: Financial Analysis → Week 5: Advanced Analytics
+Module 1: Materialized Views → Module 2: Logical Layer → Module 3: Claims Analysis → Module 4: Policy Data → Module 5: Financial Analysis → Module 6: Advanced Analytics
 ```
 
 ## 📋 Course Structure
@@ -79,7 +79,28 @@ BriteCore view documentation:
 
 ## 🎓 Learning Objectives by Module
 
-### Module 1: Introduction to BriteCore Views (Week 1)
+### Module 1: Materialized Views - m_inforce_policies (Module 1)
+**Learning Objectives:**
+- Understand materialized views vs regular views
+- Learn to query m_inforce_policies effectively
+- Master basic JOIN operations
+- Extract data from JSON fields
+- Build comprehensive policy reports
+
+**Key Skills:**
+- Materialized view performance benefits
+- Basic JOIN operations
+- JSON data extraction
+- Policy analysis techniques
+- Business reporting fundamentals
+
+**Real-World Application:**
+- Policy in force reporting
+- Premium analysis
+- Construction type analysis
+- Geographic policy distribution
+
+### Module 2: Introduction to BriteCore Views (Module 2)
 **Learning Objectives:**
 - Understand the logical layer concept
 - Set up SQL editor for BriteCore
@@ -98,7 +119,7 @@ BriteCore view documentation:
 - Basic reporting
 - Data exploration
 
-### Module 2: Claims Analysis (Week 2)
+### Module 3: Claims Analysis (Module 3)
 **Learning Objectives:**
 - Understand claims data structure
 - Analyze claims by status and type
@@ -116,7 +137,7 @@ BriteCore view documentation:
 - Loss trend analysis
 - Claims status tracking
 
-### Module 3: Policy and Property Data (Week 3)
+### Module 4: Policy and Property Data (Module 4)
 **Learning Objectives:**
 - Understand policy type structures
 - Analyze property characteristics
@@ -134,7 +155,7 @@ BriteCore view documentation:
 - Property portfolio analysis
 - Geographic risk assessment
 
-### Module 4: Financial Data Analysis (Week 4)
+### Module 5: Financial Data Analysis (Module 5)
 **Learning Objectives:**
 - Analyze payment processing data
 - Track commission calculations
@@ -152,7 +173,7 @@ BriteCore view documentation:
 - Commission analysis
 - Financial performance tracking
 
-### Module 5: Advanced Analytics (Week 5)
+### Module 6: Advanced Analytics (Module 6)
 **Learning Objectives:**
 - Join multiple views effectively
 - Use window functions for trends

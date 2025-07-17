@@ -38,7 +38,7 @@ Views are like **virtual tables** that:
 
 ### Example: v_contacts View
 
-Instead of writing this complex query:
+Instead of writing this complex query(which is NOT compatible with SQL Editor):
 ```sql
 SELECT 
     c.id,
@@ -124,23 +124,6 @@ Each view includes built-in documentation:
 - **Data relationships** clearly defined
 - **Performance considerations** noted
 
-## 🎯 Benefits for SQL Training
-
-### 1. **Faster Learning**
-- No need to understand complex table relationships
-- Focus on SQL concepts, not database architecture
-- Immediate results with simple queries
-
-### 2. **Real Business Context**
-- Work with actual insurance data
-- Learn industry-specific terminology
-- Understand real business processes
-
-### 3. **Consistent Experience**
-- Same field names across all views
-- Predictable data structure
-- Reliable query results
-
 ## 🛠️ Your First Query
 
 Let's start with a simple query to explore the v_contacts view:
@@ -156,12 +139,7 @@ FROM v_contacts
 LIMIT 10;
 ```
 
-## 📝 Practice Questions
 
-1. **What is the main benefit of using views instead of raw tables?**
-2. **Name three key BriteCore views and their purposes.**
-3. **How do view names help you understand their content?**
-4. **Why is the logical layer especially helpful for SQL beginners?**
 
 ## 🔗 Next Steps
 

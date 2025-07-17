@@ -1,60 +1,66 @@
 -- =====================================================
--- Module 1 Exercises: Introduction to BriteCore Views
+-- Module 1 Exercises: Materialized Views - m_inforce_policies
 -- =====================================================
 
--- Exercise 1.1: Basic Contact Data Retrieval
--- ==========================================
--- Write a query to retrieve the first 10 contacts with their basic information
--- Include: contact_id, contact_name, contact_type, and primary_email
--- Only show active contacts (not deleted)
+-- Exercise 1.1: Basic m_inforce_policies Query
+-- ============================================
+-- Write a query to see all data in m_inforce_policies
+-- Limit to 10 results to avoid overwhelming output
 
 -- Your query here:
 -- SELECT ...
 
--- Exercise 1.2: Contact Filtering
--- ===============================
--- Find all contacts who are organizations (not individuals)
--- Show their name, email, and full address
--- Limit to 5 results
+-- Exercise 1.2: Simple Policy Report
+-- ==================================
+-- Create a basic policy report showing:
+-- Include: state, policy_type, policy_number, inforce_premium
+-- Join m_inforce_policies with v_policy_types and v_revisions
+-- Order by inforce_premium descending
+-- Limit to 10 results
 
 -- Your query here:
 -- SELECT ...
 
--- Exercise 1.3: Contact Search
--- ============================
--- Search for contacts whose name contains "Smith"
--- Show their name, type, and primary phone
--- Order by contact name alphabetically
+-- Exercise 1.3: Policy Count by State
+-- ===================================
+-- Count how many policies exist in each state
+-- Join m_inforce_policies with v_policy_types
+-- Group by state
+-- Order by policy count descending
 
 -- Your query here:
 -- SELECT ...
 
--- Exercise 1.4: Geographic Analysis
--- =================================
--- Find all contacts in California (CA)
--- Count how many are individuals vs organizations
--- Show the count for each type
+-- Exercise 1.4: Premium Analysis by Policy Type
+-- =============================================
+-- Analyze premium amounts by policy type
+-- Show: policy_type, policy_count, total_premium, avg_premium
+-- Join m_inforce_policies with v_policy_types
+-- Group by policy_type
+-- Order by total_premium descending
 
 -- Your query here:
 -- SELECT ...
 
--- Exercise 1.5: Role Analysis
--- ===========================
--- Find all contacts who have the role "agent"
--- Show their name, email, and roles
--- Only include active contacts
+-- Exercise 1.5: Policy with Address Information
+-- ============================================
+-- Create a report showing policies with their addresses
+-- Include: state, policy_type, policy_number, full_address
+-- Join m_inforce_policies, v_policy_types, v_revisions, and v_properties
+-- Use GROUP BY to handle multiple properties per policy
+-- Limit to 10 results
 
 -- Your query here:
 -- SELECT ...
 
 -- =====================================================
--- Challenge Exercise: Contact Summary Report
+-- Challenge Exercise: Advanced Policy Analysis
 -- =====================================================
--- Create a summary report showing:
--- 1. Total number of active contacts
--- 2. Breakdown by contact type (individual vs organization)
--- 3. Top 5 states by number of contacts
--- 4. Number of contacts with email addresses
+-- Create a comprehensive policy analysis showing:
+-- 1. Policy count and total premium by state and policy type
+-- 2. Average premium by policy type
+-- 3. Policy distribution across states
+-- 4. Premium range analysis (min, max, avg)
 
 -- Your comprehensive query here:
 -- SELECT ...
@@ -64,62 +70,63 @@
 -- =====================================================
 
 -- Solution 1.1:
-SELECT contact_id, contact_name, contact_type, primary_email
-FROM v_contacts
-WHERE deleted = 0
-LIMIT 10;
+SELECT * FROM m_inforce_policies LIMIT 10;
 
 -- Solution 1.2:
-SELECT contact_name, primary_email, full_address
-FROM v_contacts
-WHERE contact_type = 'organization' AND deleted = 0
-LIMIT 5;
+SELECT 
+    t.state,
+    t.policy_type,
+    r.policy_number,
+    i.inforce_premium
+FROM m_inforce_policies i
+JOIN v_policy_types t ON t.policy_type_id = i.policy_type_id
+JOIN v_revisions r ON r.revision_id = i.revision_id
+ORDER BY i.inforce_premium DESC
+LIMIT 10;
 
 -- Solution 1.3:
-SELECT contact_name, contact_type, primary_phone
-FROM v_contacts
-WHERE contact_name LIKE '%Smith%' AND deleted = 0
-ORDER BY contact_name;
+SELECT 
+    t.state,
+    COUNT(*) as policy_count
+FROM m_inforce_policies i
+JOIN v_policy_types t ON t.policy_type_id = i.policy_type_id
+GROUP BY t.state
+ORDER BY policy_count DESC;
 
 -- Solution 1.4:
-SELECT contact_type, COUNT(*) as contact_count
-FROM v_contacts
-WHERE address_state = 'CA' AND deleted = 0
-GROUP BY contact_type;
+SELECT 
+    t.policy_type,
+    COUNT(*) as policy_count,
+    SUM(i.inforce_premium) as total_premium,
+    ROUND(AVG(i.inforce_premium), 2) as avg_premium
+FROM m_inforce_policies i
+JOIN v_policy_types t ON t.policy_type_id = i.policy_type_id
+GROUP BY t.policy_type
+ORDER BY total_premium DESC;
 
 -- Solution 1.5:
-SELECT contact_name, primary_email, roles
-FROM v_contacts
-WHERE roles LIKE '%agent%' AND deleted = 0;
+SELECT 
+    t.state,
+    t.policy_type,
+    r.policy_number,
+    MIN(l.full_address) AS full_address
+FROM m_inforce_policies i
+JOIN v_policy_types t ON t.policy_type_id = i.policy_type_id
+JOIN v_revisions r ON r.revision_id = i.revision_id
+JOIN v_properties l ON l.revision_id = i.revision_id
+GROUP BY t.state, t.policy_type, r.policy_number
+LIMIT 10;
 
--- Solution Challenge: v1 (doesn't work)
+-- Solution Challenge:
 SELECT 
-    'Total Active Contacts' as metric,
-    COUNT(*) as value
-FROM v_contacts
-WHERE deleted = 0
-UNION ALL
-SELECT 
-    'Individuals',
-    COUNT(*)
-FROM v_contacts
-WHERE contact_type = 'individual' AND deleted = 0
-UNION ALL
-SELECT 
-    'Organizations',
-    COUNT(*)
-FROM v_contacts
-WHERE contact_type = 'organization' AND deleted = 0
-UNION ALL
-SELECT 
-    'With Email Addresses',
-    COUNT(*)
-FROM v_contacts
-WHERE primary_email IS NOT NULL AND deleted = 0; 
-
--- Solution Challenge v2 (works with subqueries) LoLa no likes UNION ALL
-SELECT
-    (SELECT COUNT(*) FROM v_contacts WHERE deleted = 0) AS total_active_contacts,
-    (SELECT COUNT(*) FROM v_contacts WHERE contact_type = 'individual' AND deleted = 0) AS individuals,
-    (SELECT COUNT(*) FROM v_contacts WHERE contact_type = 'organization' AND deleted = 0) AS organizations,
-    (SELECT COUNT(*) FROM v_contacts WHERE primary_email IS NOT NULL AND deleted = 0) AS with_email_addresses;
+    t.state,
+    t.policy_type,
+    COUNT(*) as policy_count,
+    SUM(i.inforce_premium) as total_premium,
+    ROUND(AVG(i.inforce_premium), 2) as avg_premium,
+    MIN(i.inforce_premium) as min_premium,
+    MAX(i.inforce_premium) as max_premium
+FROM m_inforce_policies i
+JOIN v_policy_types t ON t.policy_type_id = i.policy_type_id
+GROUP BY t.state, t.policy_type
+ORDER BY total_premium DESC;

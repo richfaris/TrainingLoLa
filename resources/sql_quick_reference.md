@@ -25,20 +25,28 @@ LIMIT number;
 -- Select specific columns
 SELECT claim_number, claim_status, loss_date
 FROM v_claims
-WHERE claim_active_flag =1Select all columns
-SELECT * FROM v_policy_types WHERE active = 1-- Select with aliases
+WHERE claim_active_flag = 1;
+
+-- Select all columns
+SELECT * FROM v_policy_types WHERE active = 1;
+
+-- Select with aliases
 SELECT 
     pt.policy_type_name as type,
     COUNT(*) as count
 FROM v_policy_types pt
-WHERE pt.active = 1```
+WHERE pt.active = 1;
+```
 
 ### Filtering with WHERE
 ```sql
 -- Basic conditions
 WHERE claim_status = 'open'
-WHERE payment_amount > 100WHERE loss_date >= '2024-01ultiple conditions
-WHERE claim_active_flag = 1  AND loss_date >= 2024-1  AND claim_status IN ('open', investigating')
+WHERE payment_amount > 100
+WHERE loss_date >= '2024-01-01'
+
+-- Multiple conditions
+WHERE claim_active_flag = 1 AND loss_date >= '2024-01-01' AND claim_status IN ('open', 'investigating')
 
 -- NULL handling
 WHERE loss_cause IS NOT NULL
@@ -46,7 +54,7 @@ WHERE address_city IS NULL
 
 -- Pattern matching
 WHERE contact_name LIKE '%Smith%'
-WHERE policy_number LIKEPOL%'
+WHERE policy_number LIKE 'POL%'
 ```
 
 ## 🔗 JOIN Operations
@@ -81,7 +89,9 @@ SELECT
 FROM v_claims c
 JOIN v_policy_types pt ON c.policy_type_id = pt.policy_type_id
 JOIN v_contacts con ON c.primary_insured_id = con.contact_id
-WHERE c.claim_active_flag =1
+WHERE c.claim_active_flag = 1;
+```
+
 ## 📈 Aggregation Functions
 
 ### Basic Aggregations
@@ -117,7 +127,8 @@ SELECT
     loss_cause,
     COUNT(*) as claim_count
 FROM v_claims
-WHERE claim_active_flag =1ROUP BY loss_cause
+WHERE claim_active_flag = 1
+GROUP BY loss_cause
 HAVING COUNT(*) >= 5
 ORDER BY claim_count DESC;
 ```
@@ -133,10 +144,10 @@ YEAR(loss_date) as loss_year
 MONTH(loss_date) as loss_month
 
 -- Format as YYYY-MM
-DATE_FORMAT(loss_date, '%Y-%m) as loss_month
+DATE_FORMAT(loss_date, '%Y-%m') as loss_month
 
 -- Format as readable date
-DATE_FORMAT(loss_date,%M%Y') as month_year
+DATE_FORMAT(loss_date, '%M %Y') as month_year
 ```
 
 ### Date Calculations
@@ -145,7 +156,7 @@ DATE_FORMAT(loss_date,%M%Y') as month_year
 DATEDIFF(date_reported, loss_date) as reporting_delay
 
 -- Add/subtract days
-DATE_ADD(loss_date, INTERVAL30AY) as thirty_days_later
+DATE_ADD(loss_date, INTERVAL 30 DAY) as thirty_days_later
 DATE_SUB(CURDATE(), INTERVAL 1 YEAR) as one_year_ago
 
 -- Current date
@@ -158,11 +169,11 @@ NOW() as current_timestamp
 -- This year
 WHERE YEAR(loss_date) = YEAR(CURDATE())
 
--- Last 30ys
+-- Last 30 days
 WHERE loss_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
 
 -- This month
-WHERE DATE_FORMAT(loss_date, '%Y-%m) = DATE_FORMAT(CURDATE(), '%Y-%m')
+WHERE DATE_FORMAT(loss_date, '%Y-%m') = DATE_FORMAT(CURDATE(), '%Y-%m')
 ```
 
 ## 🔢 Window Functions
@@ -177,21 +188,28 @@ SELECT
         ROWS UNBOUNDED PRECEDING
     ) as running_total
 FROM v_payments
-WHERE payment_status = completed;
+WHERE payment_status = 'completed';
 ```
 
 ### Moving Averages
 ```sql
+WITH monthly_claims AS (
+    SELECT 
+        DATE_FORMAT(loss_date, '%Y-%m') as loss_month,
+        COUNT(*) as claim_count
+    FROM v_claims
+    WHERE claim_active_flag = 1 AND loss_date IS NOT NULL
+    GROUP BY DATE_FORMAT(loss_date, '%Y-%m')
+)
 SELECT 
-    DATE_FORMAT(loss_date, '%Y-%m)as loss_month,
-    COUNT(*) as claim_count,
-    AVG(COUNT(*)) OVER (
-        ORDER BY DATE_FORMAT(loss_date, %Y-%m')
+    loss_month,
+    claim_count,
+    AVG(claim_count) OVER (
+        ORDER BY loss_month
         ROWS BETWEEN 2 PRECEDING AND CURRENT ROW
     ) as moving_avg_3months
-FROM v_claims
-WHERE claim_active_flag = 1
-GROUP BY DATE_FORMAT(loss_date, %Y-%m
+FROM monthly_claims
+ORDER BY loss_month;
 ```
 
 ### Rankings
@@ -207,7 +225,7 @@ FROM (
         SUM(cd.commission_amount) as total_commission
     FROM v_commission_details cd
     JOIN v_contacts con ON cd.agent_id = con.contact_id
-    WHERE cd.commission_status = 'paid
+    WHERE cd.commission_status = 'paid'
     GROUP BY con.contact_name
 ) agent_totals;
 ```
@@ -219,9 +237,9 @@ FROM (
 SELECT 
     claim_status,
     CASE 
-        WHEN claim_status =openHEN 'High Priority'
-        WHEN claim_status = 'investigating' THEN Medium Priority'
-        ELSE Low Priority'
+        WHEN claim_status = 'open' THEN 'High Priority'
+        WHEN claim_status = 'investigating' THEN 'Medium Priority'
+        ELSE 'Low Priority'
     END as priority_level
 FROM v_claims;
 ```
@@ -231,10 +249,11 @@ FROM v_claims;
 SELECT 
     policy_type_name,
     COUNT(CASE WHEN YEAR(date_added) = YEAR(CURDATE()) THEN 1 END) as policies_this_year,
-    COUNT(CASE WHEN YEAR(date_added) = YEAR(CURDATE()) - 1 THEN 1) as policies_last_year
+    COUNT(CASE WHEN YEAR(date_added) = YEAR(CURDATE()) - 1 THEN 1 END) as policies_last_year
 FROM v_policy_types pt
 LEFT JOIN v_revisions r ON pt.policy_type_id = r.policy_type_id
-WHERE pt.active =1OUP BY policy_type_name;
+WHERE pt.active = 1
+GROUP BY policy_type_name;
 ```
 
 ## 📊 UNION Operations
@@ -244,14 +263,17 @@ WHERE pt.active =1OUP BY policy_type_name;
 SELECT 'Total Policies' as metric,
     COUNT(*) as value
 FROM v_revisions
-WHERE active = 1UNION ALL
-SELECTActive Claims',
+WHERE active = 1
+UNION ALL
+SELECT 'Active Claims',
     COUNT(*)
 FROM v_claims
-WHERE claim_active_flag = 1UNION ALL
-SELECTTotal Revenue,SUM(payment_amount)
+WHERE claim_active_flag = 1
+UNION ALL
+SELECT 'Total Revenue',
+    SUM(payment_amount)
 FROM v_payments
-WHERE payment_status = completed';
+WHERE payment_status = 'completed';
 ```
 
 ## 🔍 Subqueries
@@ -273,9 +295,9 @@ WHERE policy_type_id IN (
 SELECT 
     claim_status,
     COUNT(*) as claim_count,
-    ROUND(COUNT(*) *100/ (
+    ROUND(COUNT(*) * 100 / (
         SELECT COUNT(*) FROM v_claims WHERE claim_active_flag = 1
-    ),2as percentage
+    ), 2) as percentage
 FROM v_claims
 WHERE claim_active_flag = 1
 GROUP BY claim_status;
@@ -300,7 +322,9 @@ WHERE loss_date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
 WHERE YEAR(payment_date) = YEAR(CURDATE())
 
 -- Specific date range
-WHERE payment_date BETWEEN 20240101 AND 2024-31
+WHERE payment_date BETWEEN '2024-01-01' AND '2024-12-31'
+```
+
 ### NULL Handling
 ```sql
 -- Check for NULL
@@ -308,16 +332,16 @@ WHERE loss_cause IS NOT NULL
 WHERE address_city IS NULL
 
 -- Use COALESCE for defaults
-COALESCE(description,No description') as claim_description
+COALESCE(description, 'No description') as claim_description
 ```
 
 ### String Functions
 ```sql
 -- Extract city from address
-SUBSTRING_INDEX(address_city, ',,1) as city_only
+SUBSTRING_INDEX(address_city, ',', 1) as city_only
 
 -- Concatenate strings
-CONCAT(contact_name,(', contact_id, ')) as full_contact
+CONCAT(contact_name, ' (', contact_id, ')') as full_contact
 
 -- Case conversion
 UPPER(policy_type_name) as type_upper
@@ -329,7 +353,8 @@ LOWER(claim_status) as status_lower
 ### Use LIMIT for Testing
 ```sql
 -- Always test with LIMIT first
-SELECT * FROM v_claims WHERE claim_active_flag =1LIMIT 10
+SELECT * FROM v_claims WHERE claim_active_flag = 1 LIMIT 10;
+```
 
 ### Filter Early
 ```sql
@@ -371,7 +396,9 @@ WHERE policy_number = 'POL123'  -- Usually indexed
 ### Debugging Queries
 ```sql
 -- Test each part separately
-SELECT * FROM v_claims WHERE claim_active_flag = 1 LIMIT5- Check data types
+SELECT * FROM v_claims WHERE claim_active_flag = 1 LIMIT 5;
+
+-- Check data types
 SELECT 
     claim_number,
     typeof(claim_number) as data_type
