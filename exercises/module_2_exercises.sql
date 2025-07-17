@@ -42,7 +42,14 @@
 -- ===========================
 -- Find all contacts who have the role "agent"
 -- Show their name, email, and roles
--- Only include active contacts
+-- Only include active contactsSELECT 
+    YEAR(loss_date) as year,
+    MONTH(loss_date) as month,
+    COUNT(*) as claim_count
+FROM v_claims
+WHERE claim_active_flag = 1 AND loss_date >= DATE_SUB(CURDATE(), INTERVAL 2 YEAR)
+GROUP BY YEAR(loss_date), MONTH(loss_date)
+ORDER BY year DESC, month DESC;
 
 -- Your query here:
 -- SELECT ...

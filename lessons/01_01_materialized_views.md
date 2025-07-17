@@ -1,4 +1,4 @@
-# Lesson 1.1: Introduction to Materialized Views - m_inforce_policies
+# Lesson 1.0: Introduction to Materialized Views - m_inforce_policies
 
 ## 🎯 Learning Objectives
 - Understand what materialized views are and how they differ from regular views
