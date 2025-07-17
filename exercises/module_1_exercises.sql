@@ -23,7 +23,7 @@
 -- Exercise 1.3: Contact Search
 -- ============================
 -- Search for contacts whose name contains "Smith"
--- Show their name, type, and phone numbers
+-- Show their name, type, and primary phone
 -- Order by contact name alphabetically
 
 -- Your query here:
@@ -64,55 +64,62 @@
 -- =====================================================
 
 -- Solution 1.1:
--- SELECT contact_id, contact_name, contact_type, primary_email
--- FROM v_contacts
--- WHERE deleted = 0
--- LIMIT 10;
+SELECT contact_id, contact_name, contact_type, primary_email
+FROM v_contacts
+WHERE deleted = 0
+LIMIT 10;
 
 -- Solution 1.2:
--- SELECT contact_name, primary_email, full_address
--- FROM v_contacts
--- WHERE contact_type = 'organization' AND deleted = 0
--- LIMIT 5;
+SELECT contact_name, primary_email, full_address
+FROM v_contacts
+WHERE contact_type = 'organization' AND deleted = 0
+LIMIT 5;
 
 -- Solution 1.3:
--- SELECT contact_name, contact_type, primary_phone, cell_phone, work_phone
--- FROM v_contacts
--- WHERE contact_name LIKE '%Smith%' AND deleted = 0
--- ORDER BY contact_name;
+SELECT contact_name, contact_type, primary_phone
+FROM v_contacts
+WHERE contact_name LIKE '%Smith%' AND deleted = 0
+ORDER BY contact_name;
 
 -- Solution 1.4:
--- SELECT contact_type, COUNT(*) as contact_count
--- FROM v_contacts
--- WHERE address_state = 'CA' AND deleted = 0
--- GROUP BY contact_type;
+SELECT contact_type, COUNT(*) as contact_count
+FROM v_contacts
+WHERE address_state = 'CA' AND deleted = 0
+GROUP BY contact_type;
 
 -- Solution 1.5:
--- SELECT contact_name, primary_email, roles
--- FROM v_contacts
--- WHERE roles LIKE '%agent%' AND deleted = 0;
+SELECT contact_name, primary_email, roles
+FROM v_contacts
+WHERE roles LIKE '%agent%' AND deleted = 0;
 
--- Solution Challenge:
--- SELECT 
---     'Total Active Contacts' as metric,
---     COUNT(*) as value
--- FROM v_contacts
--- WHERE deleted = 0
--- UNION ALL
--- SELECT 
---     'Individuals',
---     COUNT(*)
--- FROM v_contacts
--- WHERE contact_type = 'individual' AND deleted = 0
--- UNION ALL
--- SELECT 
---     'Organizations',
---     COUNT(*)
--- FROM v_contacts
--- WHERE contact_type = 'organization' AND deleted = 0
--- UNION ALL
--- SELECT 
---     'With Email Addresses',
---     COUNT(*)
--- FROM v_contacts
--- WHERE primary_email IS NOT NULL AND deleted = 0; 
+-- Solution Challenge: v1 (doesn't work)
+SELECT 
+    'Total Active Contacts' as metric,
+    COUNT(*) as value
+FROM v_contacts
+WHERE deleted = 0
+UNION ALL
+SELECT 
+    'Individuals',
+    COUNT(*)
+FROM v_contacts
+WHERE contact_type = 'individual' AND deleted = 0
+UNION ALL
+SELECT 
+    'Organizations',
+    COUNT(*)
+FROM v_contacts
+WHERE contact_type = 'organization' AND deleted = 0
+UNION ALL
+SELECT 
+    'With Email Addresses',
+    COUNT(*)
+FROM v_contacts
+WHERE primary_email IS NOT NULL AND deleted = 0; 
+
+-- Solution Challenge v2 (works with subqueries) LoLa no likes UNION ALL
+SELECT
+    (SELECT COUNT(*) FROM v_contacts WHERE deleted = 0) AS total_active_contacts,
+    (SELECT COUNT(*) FROM v_contacts WHERE contact_type = 'individual' AND deleted = 0) AS individuals,
+    (SELECT COUNT(*) FROM v_contacts WHERE contact_type = 'organization' AND deleted = 0) AS organizations,
+    (SELECT COUNT(*) FROM v_contacts WHERE primary_email IS NOT NULL AND deleted = 0) AS with_email_addresses;

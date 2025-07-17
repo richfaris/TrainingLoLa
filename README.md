@@ -108,12 +108,22 @@ This course focuses on these key BriteCore views:
 - **v_policy_types** - Policy type definitions and forms
 - **v_payments** - Payment processing and batches
 - **v_commission_details** - Commission tracking and calculations
+- **v_revisions** - Policy revision information
+- **v_revision_items** - Individual items within policy revisions
+
+### Financial Views
+- **m_accounting_terms** - Accounting term details and balances
+- **m_premium_terms** - Premium and fee information over date ranges
+- **m_premium_transactions** - Premium transaction history
+- **m_inforce_policies** - Policies in force as of specific dates
 
 ### Supporting Views
 - **v_addresses** - Address management
 - **v_notes** - System notes and comments
 - **v_files** - Document management
 - **v_system_tags** - Tagging and categorization
+- **v_insureds** - Insured party information
+- **v_roles** - Role definitions and assignments
 
 ## 🎯 Learning Objectives
 
@@ -126,7 +136,7 @@ By the end of this course, you will be able to:
 
 ## 🔍 View Documentation
 
-The course includes comprehensive documentation for all 763+ BriteCore views, including:
+The course includes comprehensive documentation for all BriteCore views, including:
 - Field descriptions and data types
 - Business logic explanations
 - Common use cases and examples

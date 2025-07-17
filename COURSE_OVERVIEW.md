@@ -7,10 +7,16 @@ This specialized course teaches you how to access and analyze BriteCore Applicat
 ## 🏗️ Course Architecture
 
 ### The BriteCore Advantage
-- **763+ Pre-built Views**: No need to understand complex table relationships
+- **Over 40 pre-built business views and several financial measure views**: No need to understand complex table relationships
 - **Business-Friendly Names**: Field names that make sense to insurance professionals
 - **Optimized Performance**: Views are tuned for common query patterns
 - **Real Data**: Work with actual insurance business scenarios
+
+### View Categories
+- **v_ Views**: Standard business views (e.g., v_contacts, v_claims, v_properties, v_policy_types, v_payments, v_commission_details, v_revisions, v_revision_items, etc.)
+- **m_ Views**: Measure views for financial and premium analysis (e.g., m_accounting_terms, m_premium_terms, m_premium_transactions, m_inforce_policies)
+Some m_ views are materialized, which increases system performance.
+- **Logical Layer**: All views are part of BriteCore's logical layer architecture, designed for business-friendly querying
 
 ### Learning Path
 ```
@@ -51,14 +57,9 @@ Complete answer keys for all exercises:
 - **module_5_solutions.sql** - Advanced techniques
 
 ### 🛠️ Tools Directory
-Setup and reference materials:
-- **sql_editor_setup_guide.md** - Complete setup instructions
-- **connection_troubleshooting.md** - Common issues and solutions
-- **keyboard_shortcuts.md** - Editor productivity tips
-
 ### 📖 Resources Directory
 Additional learning materials:
-- **sql_cheat_sheet.md** - Quick reference guide
+- **sql_quick_reference.md** - Comprehensive SQL reference guide
 - **britecore_terminology.md** - Insurance industry terms
 - **query_patterns.md** - Common query templates
 - **performance_tips.md** - Optimization strategies
@@ -232,7 +233,7 @@ BriteCore view documentation:
 - **Setup Guides**: Step-by-step instructions
 
 ### Supplementary Resources
-- **SQL Cheat Sheet**: Quick reference guide
+- **SQL Quick Reference**: Comprehensive SQL reference guide
 - **Troubleshooting Guide**: Common issues and solutions
 - **Performance Tips**: Query optimization strategies
 - **Business Context**: Insurance industry background
