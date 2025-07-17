@@ -1,0 +1,27 @@
+{
+  "id": "189ce447-b73a-4584-b9e2-ef3e2e89e679",
+  "name": "Uncommitted Policies Revisions",
+  "description": "This report provides a detailed view of all active and open insurance policy revisions within a specified date range. It is designed to support underwriting, compliance, and agency performance tracking by listing key policy metadata, agency and agent details, premium information, and named insureds. The report highlights whether each revision is the first in its policy term and ensures that only non-historical, active records are included.",
+  "report_runner": "sql_runner",
+  "custom": false,
+  "run_local": false,
+  "date_type": "range",
+  "hidden": false,
+  "report_sheets": [
+    {
+      "id": "159cda26-6b56-4596-a88d-a0855ae22c14",
+      "name": "Uncommitted Revisions",
+      "sql_query":"-- CTE 1: Define the start and end date for the report\n-- These are placeholder values to be dynamically replaced by the reporting engine (e.g., BI tool or script)\nWITH dates_cte AS (\n  SELECT\n    CAST('<<$StartDate>>' AS DATETIME) AS reportStartDate, -- Report start date (inclusive)\n    CAST('<<$EndDate>>' AS DATETIME) AS reportEndDate      -- Report end date (inclusive)\n),\n\n-- CTE 2: Define useful time windows for filtering\n-- Calculates the exact start and end of the reporting period, plus a reference to the prior moment\nperiod_cte AS (\n  SELECT\n    d.reportStartDate,\n    d.reportEndDate,\n    d.reportStartDate AS periodStart, -- Start of the reporting period\n    d.reportEndDate + INTERVAL 1 DAY - INTERVAL 1 MICROSECOND AS periodEnd, -- End of the report day (last microsecond)\n    d.reportStartDate - INTERVAL 1 MICROSECOND AS priorEnd -- Last microsecond before reportStartDate\n  FROM dates_cte d\n),\n\n-- CTE 3: Get named insureds per revision by joining v_revisions_contacts with v_insureds\n-- This aggregates all named insureds for each revision into a single comma-separated string\nnamed_insureds_cte AS (\n  SELECT\n    rc.revision_id, -- Unique revision identifier\n    GROUP_CONCAT(vi.insured_name ORDER BY rc.date_added SEPARATOR ', ') AS insured_names -- Aggregated insured names\n  FROM v_revisions_contacts rc\n  JOIN v_insureds vi ON vi.insured_id = rc.contact_id\n  WHERE rc.relationship = 'named_insured' -- Filter to include only 'named insured' relationships\n  GROUP BY rc.revision_id\n)\n\n-- Final SELECT: Extract the main report including policy, agent, and insureds data\nSELECT\n  bc_excel_link(concat('britecore/policies/information?policyId=', r.policy_id), r.policy_number) AS `Policy Number`,                   -- Unique policy identifier\n  a.contact_name `Agent/Agency`,                             -- Agent/Agency assigned to the policy\n  coalesce(a.producer_number, a.agency_number) `Producer/Agency #`,-- Producer number (identifier)\n  pt.policy_type AS `Policy Type`,                      -- Type/category of the insurance policy\n  ni.insured_names AS `Named Insured(s)`,               -- List of named insureds (aggregated)\n  r.revision_date AS `Revision Date`,\n  r.term_effective_date AS `Policy Effective Date`,\n  r.written_premium AS `Premium Total`,                 -- Total premium for the policy revision\n  CASE\n    WHEN r.revision_date = r.term_effective_date THEN 'X' -- If it's the first revision of the term\n    ELSE ''\n  END AS `First Revision`                               -- Flag to indicate the first revision\nFROM period_cte d\nSTRAIGHT_JOIN v_revisions r                             -- Main revisions table (STRAIGHT_JOIN forces join order)\nLEFT JOIN v_policy_types pt ON pt.policy_type_id = r.policy_type_id      -- Join to retrieve policy type info\nleft join v_contacts a on a.contact_id = (\n  select contact_id from v_revisions_contacts where revision_id = r.revision_id and relationship in ('agent', 'agency') and contact_id is not null order by date_added limit 1\n  ) -- Join to retrieve agency/agent details\nLEFT JOIN named_insureds_cte ni ON ni.revision_id = r.revision_id        -- Join to retrieve insured names\n\n-- Filter conditions to limit the results to the desired policies\nWHERE\n  r.revision_date BETWEEN d.reportStartDate AND d.reportEndDate -- Only include revisions within the report window\n  AND r.revision_state = 'open'                                 -- Only include 'open' revisions (currently valid)\n  AND r.policy_active_flag = 1                                  -- Only include active policy revisions\n  AND r.policy_status != 'Historical'                          -- Exclude historical/inactive policy records\nORDER BY r.revision_date ASC;",
+      "order": 0
+    }
+  ],
+  "output_format": "excel",
+  "output_file_delimiter": ",",
+  "additional_report_settings": {
+    "includeColumnHeaders": true,
+    "previewId": "",
+    "entity": "",
+    "includeCoverSheet": true
+  },
+  "category_name": "Underwriting"
+}

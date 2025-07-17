@@ -1,0 +1,27 @@
+{
+  "id": "971b521a-8ba0-3b1a-c3a5-1146203754ca",
+  "name":"Non-Pay Balance",
+  "description":"This report generates a list of policies on cancellation pending. It includes details such as policy number, effective date, expiration date, named insured, policy status, and amount due.",
+  "report_runner":"sql_runner",
+  "custom":false,
+  "run_local":false,
+  "date_type":"single",
+  "hidden": false,
+  "report_sheets":[
+    {
+      "id":"274a526a-1ca9-0b1c-b3a8-5176001724bc",
+      "name":"Non-Pay Balance",
+      "sql_query":"select \n\tbc_excel_link(concat('britecore/policies/information?policyId=', r.policy_id), r.policy_number) 'Policy Number',\n    r.term_effective_date 'Effective Date',\n    r.term_expiration_date 'Expiration Date',\n    i.contact_name 'Named Insured',\n    r.policy_status as 'Policy Status',\n    ah.account_balance 'Amount Due'\nfrom v_policy_change_log pc\njoin v_revisions r on r.revision_id=pc.revision_id and r.policy_status != 'Active'\n\tand pc.policy_change_log_type='policy non-pay cancellation pending'\n\tand pc.date_cursor='<<$AsOfDate>>'\njoin v_account_history ah on ah.account_history_id = (\n\t\tselect account_history_id from v_account_history \n\t\twhere policy_term_id=r.policy_term_id\n\t\tand not deleted\n\t\tand transaction_type = 'Non Pay'\n\t\torder by transaction_date_time desc\n\t\tlimit 1)\nleft join v_contacts i on i.contact_id=(select contact_id from v_revisions_contacts where revision_id=r.revision_id and relationship='named_insured' order by date_added desc limit 1)\norder by r.policy_number;",
+      "order":0
+      }
+  ],
+  "output_format":"excel",
+  "output_file_delimiter":",",
+  "additional_report_settings":{
+    "includeColumnHeaders":true,
+    "previewId":"",
+    "entity":"",
+    "includeCoverSheet":true
+  },
+  "category_name":"Audits"
+}

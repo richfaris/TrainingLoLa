@@ -1,0 +1,26 @@
+{
+  "id":"1be361a2-bd74-1947-ac2c-174bcea3f732",
+  "name":"Inspections Due",
+  "description":"This report provides a list of properties with upcoming inspections due within a specified date range.",
+  "report_runner":"sql_runner",
+  "custom":true,
+  "run_local":true,
+  "date_type":"range",
+  "report_sheets":[
+    {
+      "id":"9ac020c0-ad14-6177-cc1c-175bbea3a722",
+      "name":"Inspections Info",
+      "sql_query":"\nselect\n\tcoalesce(ins.contact_name,'No inspector listed') 'Inspector Name',\n    p.next_inspection_date 'Next Inspection Date',\n    p.inspection_requested_date 'Last Inspection Date',\n    pt.policy_type 'Policy Type',\n    bc_excel_link(concat('britecore/policies/information?policyId=', r.policy_id), r.policy_number) 'Policy Number',\n    i.contact_name 'Named Insured',\n    r.inception_date 'Inception Date',\n\tp.full_address 'Property Address',\n    p.address_county County,\n    r.renewal_status 'Type', \n    ag.contact_name 'Agent/Agency',\n    coalesce(ag.producer_number, ag.agency_number) 'Producer/Agent #',    \n    r.policy_status 'Policy Status'\nfrom v_properties p\njoin v_revisions r on p.revision_id=r.revision_id \n    and not p.deleted \n    and p.next_inspection_date between '<<$StartDate>>' and '<<$EndDate>>' \n    and r.revision_state in ('committed', 'pending')\n    and r.policy_active_flag\njoin v_policy_types pt on pt.policy_type_id=r.policy_type_id\nleft join v_contacts i on i.contact_id=(select contact_id from v_revisions_contacts where revision_id=p.revision_id and relationship='named_insured' order by date_added asc limit 1)\nleft join v_contacts ag on ag.contact_id=(select contact_id from v_revisions_contacts where revision_id=p.revision_id and relationship in ('agent', 'agency') and contact_id is not null order by date_added desc limit 1)\nleft join v_contacts ins on ins.contact_id = (select contact_id from v_properties_contacts where property_id=p.property_id and relationship='inspector' order by date_added desc limit 1)\ngroup by p.full_address\norder by p.next_inspection_date asc, p.inspection_requested_date desc;\n",
+      "order":0
+    }
+  ],
+  "output_format":"excel",
+  "output_file_delimiter":",",
+  "additional_report_settings":{
+    "includeColumnHeaders":true,
+    "previewId":"",
+    "entity":"",
+    "includeCoverSheet": true
+  },
+  "category_name":"Underwriting"
+}

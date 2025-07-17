@@ -1,0 +1,50 @@
+/* v_files */
+create or replace algorithm = merge view v_files as
+select
+   f.id file_id,
+   case type when 'policies' then f.referenceId end policy_id,
+   case type when 'claims' then f.referenceId end claim_id,
+   case type when 'policy_type_items' then f.referenceId end policy_type_item_id,
+   case type when 'policy_types' then f.referenceId end policy_type_id,
+   case type when 'properties' then f.referenceId end property_id,
+   case when type in ('commission_report', 'negative_commission_report') then f.referenceId
+        else f.contactId
+        end contact_id,
+   f.revisionId revision_id,
+   xrl.reportId report_id,
+   xrl.locationId location_id,
+   f.isdir is_dir,
+   f.type file_type,
+   f.label file_label,
+   f.printState print_state,
+   f.printDate date_to_print,
+   f.actualPrintDate date_printed,
+   f.active active,
+   f.addedToZip added_to_zip,
+   f.dateAdded date_added,
+   f.emailOnly email_only,
+   f.emailed emailed,
+   f.folderId folder_id,
+   f.isphoto is_photo,
+   f.mimeType mime_type,
+   f.batch batch,
+   f.printLocation print_location,
+   f.private private,
+   f.readOnly read_only,
+   f.receivedMetaData received_metadata,
+   f.size size,
+   f.successfulUpload successful_upload,
+   f.virusScan virus_scan,
+   f.title file_title,
+   f.tag file_tag,
+   f.description file_description,
+   f.subType file_sub_type,
+   f.uploadingToS3 uploading_to_s3,
+   f.url file_url,
+   f.vendorUpload vendor_upload,
+   f.uploadedBy uploaded_by,
+   f.dateUpdated date_updated,
+   f.esigned esigned
+from files f
+left join x_report_locations xrl on xrl.id = f.xReportLocationId
+;

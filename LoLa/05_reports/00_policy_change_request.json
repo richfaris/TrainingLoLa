@@ -1,0 +1,33 @@
+{
+  "id": "f121d9a1-9b1a-4a55-ad83-c7f6df914148",
+  "name": "Policy Change Requests",
+  "description": "This report provides a summary of all policy change requests, including those that have been submitted and those that are still pending submission.",
+  "report_runner": "sql_runner",
+  "custom": false,
+  "run_local": false,
+  "date_type": "single",
+  "hidden": false,
+  "report_sheets": [
+    {
+      "id": "7f9fe86e-d5ff-476d-bbeb-2618ce6710dc",
+      "name": "Submitted Change Requests",
+      "sql_query": "SELECT\n  bc_excel_link(concat('britecore/policies/information?policyId=', vr.policy_id), vr.policy_number) AS `Policy`,\n  ra.agency_name AS `Agency`,\n  vp.policy_type AS `Policy Type`,\n  vr.term_effective_date AS `Effective Date`,\n  vr.revision_date AS `Revision Date`\nFROM v_revisions vr\nINNER JOIN v_policy_types vp ON vp.policy_type_id = vr.policy_type_id\nINNER JOIN v_revisions_agencies ra ON ra.revision_id = vr.revision_id\nWHERE\n  vr.policy_active_flag = 1 AND\n  vr.copied_from_revision_id IS NULL AND\n  vr.revision_state = 'open' AND\n  vr.policy_status = 'Submitted'\nORDER BY vr.policy_status, vp.policy_type;",
+      "order": 0
+    },
+    {
+      "id": "60602d9e-92c7-438a-bfab-7ee2ccbf40f2",
+      "name": "Unsubmitted Change Requests",
+      "sql_query": "SELECT\n  bc_excel_link(concat('britecore/policies/information?policyId=', vr.policy_id), vr.policy_number) AS `Policy`,\n  ra.agency_name AS `Agency`,\n  vp.policy_type AS `Policy Type`,\n  vr.term_effective_date AS `Effective Date`,\n  vr.revision_date AS `Revision Date`\nFROM v_revisions vr\nINNER JOIN v_policy_types vp ON vp.policy_type_id = vr.policy_type_id\nINNER JOIN v_revisions_agencies ra ON ra.revision_id = vr.revision_id\nWHERE\n  vr.policy_active_flag = 1 AND\n  vr.copied_from_revision_id IS NULL AND\n  vr.revision_state = 'open' AND\n  vr.policy_status = 'Unsubmitted'\nORDER BY vr.policy_status, vp.policy_type;",
+      "order": 1
+    }
+  ],
+  "output_format": "excel",
+  "output_file_delimiter": ",",
+  "additional_report_settings": {
+    "includeColumnHeaders": true,
+    "previewId": "",
+    "entity": "",
+    "includeCoverSheet": true
+  },
+  "category_name": "Audits"
+}

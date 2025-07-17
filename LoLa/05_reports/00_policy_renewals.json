@@ -1,0 +1,27 @@
+{
+  "id": "b7ee8d26-e253-4e8c-8b18-1c32fe9f30f2",
+  "name": "Policy Renewals",
+  "description": "This report generates a list of policies that are renewing within a specific date range.",
+  "report_runner": "sql_runner",
+  "custom": false,
+  "run_local": false,
+  "date_type": "range",
+  "hidden": false,
+  "report_sheets": [
+    {
+      "id": "a03b03bd-da68-4b73-b319-45fb1c21dcba",
+      "name": "Policy Renewals",
+      "sql_query": "-- ================================================\n-- RENEWAL REPORT\n-- Description: \n-- This report generates a list of policies that are **renewing** within a specific date range.\n-- It includes details such as policy number, policy type, agency, named insured, address, phone, \n-- and important dates like inception and renewal date.\n-- The logic ensures that only the **latest revision** of each policy within the renewal period is selected.\n-- ================================================\n\n-- CTE 1: Define the start and end date for the report\nWITH\ndates_cte AS (\n  SELECT\n    CAST('<<$StartDate>>' AS DATETIME) AS reportStartDate, -- Replace with actual report start date\n    CAST('<<$EndDate>>' AS DATETIME) AS reportEndDate      -- Replace with actual report end date\n),\n\n-- CTE 2: Define useful time windows for filtering\nperiod_cte AS (\n  SELECT\n    d.reportStartDate,\n    d.reportEndDate,\n    d.reportStartDate AS periodStart, -- Start of the renewal window\n    d.reportEndDate + INTERVAL 1 DAY - INTERVAL 1 MICROSECOND AS periodEnd, -- End of the day of reportEndDate\n    d.reportStartDate - INTERVAL 1 MICROSECOND AS priorEnd -- Last moment before the start of the window\n  FROM dates_cte d\n)\n\n-- Main query: Select renewal policies within the specified period\nSELECT\n  bc_excel_link(concat('britecore/policies/information?policyId=', r.policy_id), r.policy_number) AS `Policy Number`,                   -- Unique identifier of the policy\n  vp.policy_type AS `Policy Type`,                      -- Type/category of the policy\n  ra.agency_name AS `Agent/Agency`,                     -- Name of the agency or agent responsible\n  vi.insured_name AS `Named Insured`,                   -- Name of the primary insured person\n  vi.address_line_1 AS `Insured Address`,               -- Street address of the insured\n  vi.primary_phone AS `Insured Phone`,                  -- Phone number of the insured\n  r.term_expiration_date AS `Renewal Date`,             -- When the current term expires (renewal date)\n  r.inception_date AS `Inception Date`                  -- Original start date of the policy\nFROM period_cte d\n\n-- Use STRAIGHT_JOIN to force MySQL join order for optimization/stability\nSTRAIGHT_JOIN v_revisions r\n  ON r.revision_state IN ('committed', 'pending')       -- Consider only committed or pending revisions\n  AND r.revision_id = (\n    -- Subquery: Find the latest applicable revision for each policy\n    SELECT rr.revision_id\n    FROM v_revisions rr\n    WHERE rr.policy_id = r.policy_id\n      AND rr.term_expiration_date BETWEEN d.periodStart AND d.reportEndDate\n      AND rr.revision_state IN ('committed', 'pending') -- Again filter for valid revisions\n      AND rr.renewal_status = 'Renew'                   -- Only renewals\n      AND rr.policy_active_flag = 1                     -- Only active policies\n    ORDER BY\n      rr.revision_date DESC,                            -- Prioritize latest by revision date\n      COALESCE(rr.commit_date_time, rr.revision_date) DESC,\n      rr.create_date DESC\n    LIMIT 1\n  )\n\n-- Join to fetch policy type name\nINNER JOIN v_policy_types vp ON vp.policy_type_id = r.policy_type_id\n\n-- Join to fetch agency/agent name\nINNER JOIN v_revisions_agencies ra ON ra.revision_id = r.revision_id\n\n-- Join to get the named insured details (first added named insured for the revision)\nINNER JOIN v_insureds vi ON vi.insured_id = (\n  SELECT contact_id\n  FROM v_revisions_contacts\n  WHERE revision_id = r.revision_id AND relationship = 'named_insured'\n  ORDER BY date_added\n  LIMIT 1\n)\n\n-- Filter to only include currently active or pending-cancellation policies\nWHERE r.policy_status IN ('Active', 'Cancellation Pending, Non-Payment of Premium')\n\n-- Sort policies with the most recent inception date first\nORDER BY r.inception_date DESC;\n",
+      "order": 0
+    }
+  ],
+  "output_format": "excel",
+  "output_file_delimiter": ",",
+  "additional_report_settings": {
+    "includeColumnHeaders": true,
+    "previewId": "",
+    "entity": "",
+    "includeCoverSheet": true
+  },
+  "category_name": "Audits"
+}

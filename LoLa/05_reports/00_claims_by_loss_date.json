@@ -1,0 +1,27 @@
+{
+  "id": "a7ce5d16-c251-5e8a-8c14-2c34af9f40e1",
+  "name": "Claims by Loss Date",
+  "description": "This report generates a list of claims that have a loss date within a specific date range. It includes details such as claim number, policy number, policy type, agent/agency, named insured, loss date, loss cause(s), claim status, and financials.",
+  "report_runner": "sql_runner",
+  "custom": false,
+  "run_local": false,
+  "date_type": "range",
+  "hidden": false,
+  "report_sheets":[
+    {
+      "id": "470b728b-8ea9-4b0b-b3d5-2166804764ba",
+      "name": "Claim List",
+      "sql_query":"with claims as (\n  select\n  \tbc_excel_link(concat('britecore/claims/information?claimId=', inn.claim_id), inn.claim_number) 'Claim Number',\n      bc_excel_link(concat('britecore/policies/information?policyId=', r.policy_id), r.policy_number) 'Policy Number',\n      trim(pt.policy_type) 'Policy Type',\n      agt.contact_name 'Agent/Agency',\n      agt.producer_number 'Producer/Agent #',\n      r.inception_date 'Inception Date',\n      r.term_expiration_date 'Expiration Date',\n      (select subline_name from v_policy_type_items where policy_type_id = pt.policy_type_id order by subline_name desc limit 1) 'Subline Name',\n      (select subline_type from v_policy_type_items where policy_type_id = pt.policy_type_id order by subline_type desc limit 1) 'Subline Type',\n      i.contact_name 'Named Insured',\n  \tinn.loss_date 'Loss Date',\n      (select\n        group_concat(distinct loss_cause\n          order by loss_cause asc separator ', ')\n      from v_claims_perils where claim_id = inn.claim_id) 'Loss Cause(s)',\n      inn.claim_status 'Status',\n      (select claim_date from v_claims_dates where date_type='reported' and claim_id=inn.claim_id order by claim_date desc limit 1) 'Reported Date',\n      (select claim_date from v_claims_dates where date_type='closed' and claim_id=inn.claim_id order by claim_date desc limit 1) 'Closed Date',\n  \tsum(li.loss_reserved+li.adjusting_reserved+li.legal_reserved) 'Net Reserve',\n  \tsum(li.loss_paid+li.adjusting_paid+li.legal_paid) 'Total Paid'\n  from (\n  \tselect \n  \t\tclaim_id,\n  \t\tclaim_number,\n          policy_number,\n          revision_id,\n          loss_date,\n          claim_status\n  \tfrom v_claims where cast(loss_date as Date) between '<<$StartDate>>' and '<<$EndDate>>'\n  \t\tand claim_active_flag) inn\n  left join v_losses_incurred li on li.claim_id = inn.claim_id\n  join v_revisions r on inn.revision_id=r.revision_id\n  join v_policy_types pt on pt.policy_type_id = r.policy_type_id\n  left join v_contacts agt on agt.contact_id = (select contact_id from v_revisions_contacts where revision_id = r.revision_id and relationship in ('agent', 'agency') and contact_id is not null order by date_added limit 1)\n  join v_contacts i on i.contact_id = (select contact_id from v_revisions_contacts where revision_id = r.revision_id and contact_id is not null and relationship='named_insured' order by date_added limit 1)\n  group by 1\n  order by inn.loss_date\n)\n\nselect u.* \n  from (\n    SELECT * from claims \n    UNION ALL  \n    select\n      '','','','','','',\n      '','','','','','',\n      'Totals',\n      sum(f.`Net Reserve`),\n      sum(f.`Total Paid`),\n      '',''\n    from claims f) u",
+      "order": 0
+    }
+  ],
+  "output_format": "excel",
+  "output_file_delimiter": ",",
+  "additional_report_settings": {
+    "includeColumnHeaders": true,
+    "previewId": "",
+    "entity": "",
+    "includeCoverSheet": true
+  },
+  "category_name": "Claims"
+}

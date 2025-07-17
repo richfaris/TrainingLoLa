@@ -1,0 +1,45 @@
+{
+  "id":"7f2e9b41-c7d3-4f89-b12a-8d5c6e4a9f73",
+  "name":"Write-Offs and Waives",
+  "description":"This report provides details on write-offs and waived fees for policies within a specified date range. It includes individual policy details as well as summaries by policy type and agent/agency.",
+  "report_runner":"sql_runner",
+  "custom":false,
+  "run_local":false,
+  "date_type":"range",
+  "hidden":false,
+  "report_sheets":[
+    {
+      "id":"a8b5c2e1-9d4f-4c67-8e91-f3a7b9c4d2e6",
+      "name":"Write-Offs",
+      "sql_query":"-- CTE select write-off amounts per policy\nwith write_offs as (\n  select\n   bc_excel_link(concat('britecore/policies/information?policyId=', r.policy_id), r.policy_number) `Policy Number`,\n   t.policy_type `Policy Type`,\n   r.policy_status `Policy Status`,\n   r.term_effective_date `Effective Date`,\n   r.term_expiration_date `Expiration Date`,\n   r.cancel_date `Cancel Date`,\n   m.premium_write_off * -1 `Written Off Amount`\n  from m_accounting_terms m\n  join v_revisions r on r.revision_id = (select revision_id from v_account_history where revision_id = m.revision_id and transaction_type = 'Waive' and transaction_date_time between '<<$StartDate>>' and '<<$EndDate>>' limit 1)\n  join v_policy_types t on t.policy_type_id = m.policy_type_id\n  where m.term_premium_write_off <> 0\n  order by r.cancel_date desc, r.policy_number desc\n  )\n\nselect u.* from\n  (\nSELECT \n  * from write_offs \nUNION ALL\n  select\n    '','','','','',\n    'TOTAL',\n    sum(f.`Written Off Amount`)\n  from write_offs f\n  ) u\n  ;",
+      "order":0
+    },
+    {
+      "id":"2c8f4a67-b3e9-4d12-a745-6f8c9b2e3a54",
+      "name":"Waived Fees",
+      "sql_query":"-- CTE select waived fees per policy\nwith waived_fees as (\n  select\n   bc_excel_link(concat('britecore/policies/information?policyId=', r.policy_id), r.policy_number) `Policy Number`,\n   t.policy_type `Policy Type`,\n   r.policy_status `Policy Status`,\n   m.system_fee_waive * -1 `System Fees Waived`\n  from m_accounting_terms m\n  join v_revisions r on r.revision_id = (select revision_id from v_account_history where revision_id = m.revision_id and transaction_type = 'Waive' and transaction_date_time between '<<$StartDate>>' and '<<$EndDate>>' limit 1)\n    and r.revision_state in ('committed', 'pending') \n  join v_policy_types t on t.policy_type_id = m.policy_type_id\n)\n\nselect u.* from\n  (\nSELECT \n  * from waived_fees \nUNION ALL\n  select\n    '','',\n    'TOTAL',\n    sum(f.`System Fees Waived`)\n  from waived_fees f\n  ) u\n  ;",
+      "order":1
+    },
+    {
+      "id":"9e3a7f52-d8c4-4b16-9f27-c5e8a1b6d473",
+      "name":"Summary By Policy Type", 
+      "sql_query":"-- CTE select write-offs and waived fees by policy type\nwith summary_by_ptype as (\n  select\n   t.policy_type `Policy Type`,\n   sum(m.premium_write_off * -1) `Written Off`,\n   sum(m.system_fee_waive * -1) `Waived Fees`,\n  from m_accounting_terms m\n  join v_revisions r on r.revision_id = (select revision_id from v_account_history where revision_id = m.revision_id and transaction_type = 'Waive' and transaction_date_time between '<<$StartDate>>' and '<<$EndDate>>' limit 1)\n  join v_policy_types t on t.policy_type_id = m.policy_type_id\n  group by `Policy Type`\n)\n\nselect u.* from\n  (\nSELECT \n  * from summary_by_ptype \nUNION ALL\n  select\n    'TOTALS',\n    sum(f.`Written Off`),\n    sum(f.`Waived Fees`)\n  from summary_by_ptype f\n  ) u\n  ;",
+      "order":2
+    },
+    {
+      "id":"f1b6d928-5c3a-4e47-8d92-a7f4c6b8e135",
+      "name":"Summary By Agent|Agency",
+      "sql_query":"-- CTE select write-offs and waived fees by agency\nwith summary_by_agency as (\n  select\n   a.contact_name `Agent/Agency`,\n   coalesce(a.producer_number, a.agency_number) `Producer/Agency #`,\n   sum(m.premium_write_off * -1) `Written Off`,\n   sum(m.system_fee_waive * -1) `Waived Fees`,\n  from m_accounting_terms m\n  join v_revisions r on r.revision_id = (select revision_id from v_account_history where revision_id = m.revision_id and transaction_type = 'Waive' and transaction_date_time between '<<$StartDate>>' and '<<$EndDate>>' limit 1)\n  left join v_contacts a on a.contact_id = (select contact_id from v_revisions_contacts where revision_id = m.revision_id and relationship in ('agent', 'agency') and contact_id is not null order by date_added limit 1)\n  order by `Agent/Agency`\n  group by `Agent/Agency`\n)\n\nselect u.* from\n  (\nSELECT \n  * from summary_by_agency \nUNION ALL\n  select\n    '',\n    'TOTALS',\n    sum(f.`Written Off`),\n    sum(f.`Waived Fees`)\n  from summary_by_agency f\n  ) u\n  ;",
+      "order":3
+    }
+  ],
+  "output_format":"excel",
+  "output_file_delimiter":",",
+  "additional_report_settings":{
+    "includeColumnHeaders":true,
+    "previewId":"",
+    "entity":"",
+    "includeCoverSheet":true
+  },
+  "category_name":"Billing"
+}

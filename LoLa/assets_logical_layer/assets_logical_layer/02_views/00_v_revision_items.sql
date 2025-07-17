@@ -1,0 +1,41 @@
+/* v_revision_items [revision_items, policy_type_items] */
+create or replace algorithm = merge view v_revision_items as
+select
+  i.id revision_item_id,
+  i.revisionId revision_id,
+  i.subLineInstanceId sub_line_instance_id,
+  i.itemId policy_type_item_id,
+  y.name item_name,
+  y.type item_type,
+  i.applyDate apply_date,
+  i.limit coverage_limit,
+  i.deductible,
+  i.writtenPremium written_premium,
+  i.annualPremium annual_premium,
+  i.writtenFee written_fee,
+  i.annualFee annual_fee,
+  i.manual manual_premium_override,
+  i.builderObj builder_obj,
+  bc_label_questions(i.builderObj) questions,
+  i.ratingDetails rating_obj,
+  i.dateAdded + interval i.dateAddedMicro microsecond date_added,
+  i.deleted item_deleted,
+  i.dateDeleted date_deleted,
+  i.deletedBy deleted_by,
+  i.dateUpdated date_updated,
+  i.commissionRate item_commission_rate,
+  i.limitType limit_type,
+  i.limit2 second_limit,
+  i.limit2type second_limit_type,
+  i.limit3 third_limit,
+  i.limit3Type third_limit_type,
+  i.limitUpdated limit_updated,
+  i.linkObj link_obj,
+  i.lossExposureGroup loss_exposure_group,
+  i.prevAdjAmt previous_adjustment_amount,
+  i.persistStatus persist_status,
+  i.statusReason status_reason,
+  i.previousId previous_revision_item_id
+from revision_items i
+join policy_type_items y on y.id = i.itemId
+;
