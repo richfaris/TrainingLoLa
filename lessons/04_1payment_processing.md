@@ -16,11 +16,11 @@ The `v_payments` view contains all payment transactions in BriteCore. This is es
 | Field | Type | Description | Business Use |
 |-------|------|-------------|--------------|
 | `payment_id` | INT | Unique payment identifier | Primary key for payments |
-| `payment_amount` | DECIMAL | Payment amount | Financial calculations |
-| `payment_date` | DATE | Date of payment | Payment timing analysis |
-| `payment_method` | VARCHAR | How payment was made | Payment method analysis |
-| `payment_status` | VARCHAR | Current status | Status tracking |
-| `policy_number` | VARCHAR | Associated policy | Policy relationship |
+| `transaction_amount` | DECIMAL | Payment amount | Financial calculations |
+| `transaction_date_time` | DATETIME | Date and time of payment | Payment timing analysis |
+| `payment_instrument` | VARCHAR | How payment was made | Payment method analysis |
+| `completed` | TINYINT | 1 if completed, 0 if not | Status tracking |
+| `invoice_number` | VARCHAR | Associated invoice | Invoice relationship |
 | `batch_id` | INT | Payment batch identifier | Batch processing analysis |
 
 ## 🔍 Basic Payment Queries
@@ -29,37 +29,37 @@ The `v_payments` view contains all payment transactions in BriteCore. This is es
 ```sql
 SELECT 
     payment_id,
-    payment_amount,
-    payment_date,
-    payment_method,
-    policy_number
+    transaction_amount,
+    transaction_date_time,
+    payment_instrument,
+    invoice_number
 FROM v_payments
-WHERE payment_status =completed
-ORDER BY payment_date DESC
+WHERE completed = 1
+ORDER BY transaction_date_time DESC
 LIMIT 10;
 ```
 
 ### 2. Payments by Method
 ```sql
 SELECT 
-    payment_method,
+    payment_instrument,
     COUNT(*) as payment_count,
-    SUM(payment_amount) as total_amount
+    SUM(transaction_amount) as total_amount
 FROM v_payments
-WHERE payment_status =completed
-GROUP BY payment_method
+WHERE completed = 1
+GROUP BY payment_instrument
 ORDER BY total_amount DESC;
 ```
 
 ### 3. Daily Payment Totals
 ```sql
 SELECT 
-    payment_date,
+    DATE(transaction_date_time) as payment_date,
     COUNT(*) as payment_count,
-    SUM(payment_amount) as daily_total
+    SUM(transaction_amount) as daily_total
 FROM v_payments
-WHERE payment_status =completed
-GROUP BY payment_date
+WHERE completed = 1
+GROUP BY DATE(transaction_date_time)
 ORDER BY payment_date DESC
 LIMIT 30;
 ```
@@ -69,28 +69,28 @@ LIMIT 30;
 ### Monthly Revenue Analysis
 ```sql
 SELECT 
-    DATE_FORMAT(payment_date,%Y-%m)as payment_month,
+    DATE_FORMAT(transaction_date_time, '%Y-%m') as payment_month,
     COUNT(*) as payment_count,
-    SUM(payment_amount) as monthly_revenue,
-    AVG(payment_amount) as avg_payment
+    SUM(transaction_amount) as monthly_revenue,
+    AVG(transaction_amount) as avg_payment
 FROM v_payments
-WHERE payment_status =completed'
-GROUP BY DATE_FORMAT(payment_date,%Y-%m)
+WHERE completed = 1
+GROUP BY DATE_FORMAT(transaction_date_time, '%Y-%m')
 ORDER BY payment_month DESC;
 ```
 
 ### Payment Method Performance
 ```sql
 SELECT 
-    payment_method,
+    payment_instrument,
     COUNT(*) as payment_count,
-    SUM(payment_amount) as total_revenue,
-    AVG(payment_amount) as avg_payment,
-    MIN(payment_amount) as min_payment,
-    MAX(payment_amount) as max_payment
+    SUM(transaction_amount) as total_revenue,
+    AVG(transaction_amount) as avg_payment,
+    MIN(transaction_amount) as min_payment,
+    MAX(transaction_amount) as max_payment
 FROM v_payments
-WHERE payment_status =completed
-GROUP BY payment_method
+WHERE completed = 1
+GROUP BY payment_instrument
 ORDER BY total_revenue DESC;
 ```
 
@@ -99,26 +99,26 @@ ORDER BY total_revenue DESC;
 ### Year-over-Year Comparison
 ```sql
 SELECT 
-    YEAR(payment_date) as payment_year,
+    YEAR(transaction_date_time) as payment_year,
     COUNT(*) as payment_count,
-    SUM(payment_amount) as yearly_revenue
+    SUM(transaction_amount) as yearly_revenue
 FROM v_payments
-WHERE payment_status =completed'
-GROUP BY YEAR(payment_date)
+WHERE completed = 1
+GROUP BY YEAR(transaction_date_time)
 ORDER BY payment_year DESC;
 ```
 
 ### Weekly Payment Patterns
 ```sql
 SELECT 
-    DAYOFWEEK(payment_date) as day_of_week,
-    DAYNAME(payment_date) as day_name,
+    DAYOFWEEK(transaction_date_time) as day_of_week,
+    DAYNAME(transaction_date_time) as day_name,
     COUNT(*) as payment_count,
-    SUM(payment_amount) as daily_revenue
+    SUM(transaction_amount) as daily_revenue
 FROM v_payments
-WHERE payment_status =completed'
-GROUP BY DAYOFWEEK(payment_date), DAYNAME(payment_date)
-ORDER BY DAYOFWEEK(payment_date);
+WHERE completed = 1
+GROUP BY DAYOFWEEK(transaction_date_time), DAYNAME(transaction_date_time)
+ORDER BY DAYOFWEEK(transaction_date_time);
 ```
 
 ## 🎯 Business Intelligence Queries
@@ -128,35 +128,40 @@ ORDER BY DAYOFWEEK(payment_date);
 SELECT 'Total Completed Payments' as metric,
     COUNT(*) as value
 FROM v_payments
-WHERE payment_status =completedUNION ALL
-SELECTTotal Revenue,SUM(payment_amount)
+WHERE completed = 1
+UNION ALL
+SELECT 'Total Revenue',
+    SUM(transaction_amount)
 FROM v_payments
-WHERE payment_status =completedUNION ALL
-SELECT 'Average Payment,AVG(payment_amount)
+WHERE completed = 1
+UNION ALL
+SELECT 'Average Payment',
+    AVG(transaction_amount)
 FROM v_payments
-WHERE payment_status =completedUNION ALL
+WHERE completed = 1
+UNION ALL
 SELECT 'Payments This Month',
     COUNT(*)
 FROM v_payments
-WHERE payment_status =completed'
-  AND DATE_FORMAT(payment_date, '%Y-%m) = DATE_FORMAT(CURDATE(), %Y-%m')
+WHERE completed = 1
+  AND DATE_FORMAT(transaction_date_time, '%Y-%m') = DATE_FORMAT(CURDATE(), '%Y-%m')
 UNION ALL
-SELECT 'Revenue This Month,SUM(payment_amount)
+SELECT 'Revenue This Month',
+    SUM(transaction_amount)
 FROM v_payments
-WHERE payment_status =completed'
-  AND DATE_FORMAT(payment_date, '%Y-%m) = DATE_FORMAT(CURDATE(), %Y-%m');
+WHERE completed = 1
+  AND DATE_FORMAT(transaction_date_time, '%Y-%m') = DATE_FORMAT(CURDATE(), '%Y-%m');
 ```
 
-### Payment vs Policy Analysis
+### Payment Method Analysis
 ```sql
 SELECT 
-    pt.policy_type_name,
-    COUNT(p.payment_id) as payment_count,
-    SUM(p.payment_amount) as total_revenue
-FROM v_payments p
-JOIN v_policy_types pt ON p.policy_type_id = pt.policy_type_id
-WHERE p.payment_status =completed'
-GROUP BY pt.policy_type_name
+    payment_instrument,
+    COUNT(payment_id) as payment_count,
+    SUM(transaction_amount) as total_revenue
+FROM v_payments
+WHERE completed = 1
+GROUP BY payment_instrument
 ORDER BY total_revenue DESC;
 ```
 
@@ -168,7 +173,7 @@ Analyze payment batch processing:
 SELECT 
     batch_id,
     COUNT(*) as payment_count,
-    SUM(payment_amount) as batch_total
+    SUM(transaction_amount) as batch_total
 FROM v_payment_batches
 GROUP BY batch_id
 ORDER BY batch_total DESC;
@@ -182,25 +187,27 @@ SELECT
     method_code,
     is_active
 FROM v_payment_methods
-WHERE is_active =1DER BY method_name;
+WHERE is_active = 1
+ORDER BY method_name;
 ```
 
 ## 💡 Best Practices for Payment Analysis
 
-### 1**Always Filter by Payment Status**
+### 1. **Always Filter by Payment Status**
 ```sql
-WHERE payment_status = 'completed
+WHERE completed = 1
 ```
-This ensures youre only analyzing successful payments.
+This ensures you're only analyzing successful payments.
 
 ### 2. **Use Date Ranges for Performance**
 ```sql
-WHERE payment_date >= '2024-1 AND payment_date <=202431
+WHERE transaction_date_time >= '2024-01-01' AND transaction_date_time <= '2024-12-31'
+```
 Large date ranges can slow down queries.
 
 ### 3. **Handle Currency and Precision**
 ```sql
-ROUND(SUM(payment_amount), 2) as total_revenue
+ROUND(SUM(transaction_amount), 2) as total_revenue
 ```
 Ensure consistent decimal precision for financial calculations.
 
@@ -214,7 +221,8 @@ Ensure consistent decimal precision for financial calculations.
 
 1. **What's the most popular payment method by volume?**
 2. **How much revenue did you collect this month?**
-3. **What's the average payment amount?**4**Which day of the week has the most payments?**
+3. **What's the average payment amount?**
+4. **Which day of the week has the most payments?**
 
 ## 🔗 Next Steps
 

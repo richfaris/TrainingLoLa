@@ -104,10 +104,10 @@ WHERE deleted = 0;
 - **Purpose**: All payment transactions
 - **Key Fields**:
   - `payment_id` - Unique identifier
-  - `payment_amount`, `payment_date`
-  - `payment_method` - How payment was made
-  - `payment_status` - Current status
-  - `policy_number` - Related policy
+  - `transaction_amount`, `transaction_date_time`
+  - `payment_instrument` - How payment was made
+  - `completed` - Payment completion status
+  - `invoice_number` - Related invoice
 
 ## 🔍 View Naming Convention
 

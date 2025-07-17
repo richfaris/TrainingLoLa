@@ -1,4 +1,4 @@
-# Lesson 2.1aims Analysis with v_claims
+# Lesson 2.1: Claims Analysis with v_claims
 
 ## 🎯 Learning Objectives
 - Understand the structure of v_claims view
@@ -32,7 +32,7 @@ The `v_claims` view is your primary source for claims data in BriteCore. It comb
 
 ## 🔍 Basic Claims Queries
 
-### 1 All Active Claims
+### 1. All Active Claims
 ```sql
 SELECT 
     claim_number,
@@ -41,7 +41,8 @@ SELECT
     loss_date,
     description
 FROM v_claims
-WHERE claim_active_flag =1LIMIT 10;
+WHERE claim_active_flag = 1
+LIMIT 10;
 ```
 
 ### 2. Claims by Status
@@ -55,7 +56,7 @@ GROUP BY claim_status
 ORDER BY claim_count DESC;
 ```
 
-###3aims by Loss Cause
+### 3. Claims by Loss Cause
 ```sql
 SELECT 
     loss_cause,
@@ -71,11 +72,11 @@ ORDER BY claim_count DESC;
 ### Claims by Month
 ```sql
 SELECT 
-    DATE_FORMAT(loss_date, '%Y-%m)as loss_month,
+    DATE_FORMAT(loss_date, '%Y-%m') as loss_month,
     COUNT(*) as claim_count
 FROM v_claims
-WHERE claim_active_flag =1  AND loss_date IS NOT NULL
-GROUP BY DATE_FORMAT(loss_date,%Y-%m')
+WHERE claim_active_flag = 1 AND loss_date IS NOT NULL
+GROUP BY DATE_FORMAT(loss_date, '%Y-%m')
 ORDER BY loss_month DESC;
 ```
 
@@ -85,7 +86,7 @@ SELECT
     YEAR(loss_date) as loss_year,
     COUNT(*) as claim_count
 FROM v_claims
-WHERE claim_active_flag =1  AND loss_date IS NOT NULL
+WHERE claim_active_flag = 1 AND loss_date IS NOT NULL
 GROUP BY YEAR(loss_date)
 ORDER BY loss_year DESC;
 ```
@@ -94,39 +95,41 @@ ORDER BY loss_year DESC;
 
 ### Claims Summary Dashboard
 ```sql
-SELECT Total Active Claims' as metric,
+SELECT 'Total Active Claims' as metric,
     COUNT(*) as value
 FROM v_claims
-WHERE claim_active_flag = 1UNION ALL
+WHERE claim_active_flag = 1
+UNION ALL
 SELECT 
-    OpenClaims',
+    'Open Claims',
     COUNT(*)
 FROM v_claims
 WHERE claim_active_flag = 1
-  AND claim_status =openUNION ALL
-SELECT 
-   Claims This Year',
-    COUNT(*)
-FROM v_claims
-WHERE claim_active_flag =1AND YEAR(loss_date) = YEAR(CURDATE())
+  AND claim_status = 'open'
 UNION ALL
 SELECT 
-    Claims This Month',
+    'Claims This Year',
     COUNT(*)
 FROM v_claims
-WHERE claim_active_flag =1
-  AND DATE_FORMAT(loss_date, '%Y-%m) = DATE_FORMAT(CURDATE(), %Y-%m);
+WHERE claim_active_flag = 1 AND YEAR(loss_date) = YEAR(CURDATE())
+UNION ALL
+SELECT 
+    'Claims This Month',
+    COUNT(*)
+FROM v_claims
+WHERE claim_active_flag = 1
+  AND DATE_FORMAT(loss_date, '%Y-%m') = DATE_FORMAT(CURDATE(), '%Y-%m');
 ```
 
 ### Claims by Policy Type
 ```sql
 SELECT 
-    pt.policy_type_name,
+    pt.policy_type,
     COUNT(c.claim_id) as claim_count
 FROM v_claims c
 JOIN v_policy_types pt ON c.policy_type_id = pt.policy_type_id
 WHERE c.claim_active_flag = 1
-GROUP BY pt.policy_type_name
+GROUP BY pt.policy_type
 ORDER BY claim_count DESC;
 ```
 
@@ -140,7 +143,7 @@ SELECT
     MONTH(loss_date) as month,
     COUNT(*) as claim_count
 FROM v_claims
-WHERE claim_active_flag =1  AND loss_date >= DATE_SUB(CURDATE(), INTERVAL 2 YEAR)
+WHERE claim_active_flag = 1 AND loss_date >= DATE_SUB(CURDATE(), INTERVAL 2 YEAR)
 GROUP BY YEAR(loss_date), MONTH(loss_date)
 ORDER BY year DESC, month DESC;
 ```
@@ -149,13 +152,15 @@ ORDER BY year DESC, month DESC;
 Analyze claims by location:
 ```sql
 SELECT 
-    SUBSTRING_INDEX(loss_location_address,,, 1)as city,
+    SUBSTRING_INDEX(loss_location_address, ',', 1) as city,
     COUNT(*) as claim_count
 FROM v_claims
 WHERE claim_active_flag = 1
   AND loss_location_address IS NOT NULL
-GROUP BY SUBSTRING_INDEX(loss_location_address, ',',1DER BY claim_count DESC
-LIMIT 10`
+GROUP BY SUBSTRING_INDEX(loss_location_address, ',', 1)
+ORDER BY claim_count DESC
+LIMIT 10;
+```
 
 ### 3. **Claims vs Policies Analysis**
 Compare claims to policy information:
@@ -165,20 +170,26 @@ SELECT
     c.loss_date,
     c.claim_status,
     p.policy_number,
-    p.policy_type_name
+    p.policy_type
 FROM v_claims c
 JOIN v_policy_types p ON c.policy_type_id = p.policy_type_id
-WHERE c.claim_active_flag =1DER BY c.loss_date DESC
-LIMIT 20 💡 Best Practices for Claims Analysis
+WHERE c.claim_active_flag = 1
+ORDER BY c.loss_date DESC
+LIMIT 20;
+```
 
-### 1**Always Filter by Active Claims**
+## 💡 Best Practices for Claims Analysis
+
+### 1. **Always Filter by Active Claims**
 ```sql
-WHERE claim_active_flag = 1`
+WHERE claim_active_flag = 1
+```
 This ensures you're only working with current, relevant claims.
 
 ### 2. **Use Date Ranges for Performance**
 ```sql
-WHERE loss_date >= '2024-1AND loss_date <=202431
+WHERE loss_date >= '2024-01-01' AND loss_date <= '2024-12-31'
+```
 Large date ranges can slow down queries.
 
 ### 3. **Handle NULL Values**
@@ -194,9 +205,10 @@ Many fields can be NULL, so check before grouping.
 
 ## 📝 Practice Questions
 
-1How would you find all claims reported in the last 30 days?**
-2. **Whats the most common loss cause in your claims data?**
-3. **How do you calculate the average time between loss date and report date?**4Which policy types have the highest claim frequency?**
+1. **How would you find all claims reported in the last 30 days?**
+2. **What's the most common loss cause in your claims data?**
+3. **How do you calculate the average time between loss date and report date?**
+4. **Which policy types have the highest claim frequency?**
 
 ## 🔗 Next Steps
 
